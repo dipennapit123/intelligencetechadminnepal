@@ -130,12 +130,12 @@ export function ProductEditor({
       if (!token) throw new Error("Not authenticated");
 
       if (mode === "create") {
-        const res = await apiFetch<{ id: string }>("/api/admin/products", token, {
+        await apiFetch<{ id: string }>("/api/admin/products", token, {
           method: "POST",
           body: JSON.stringify(payload),
         });
         toast({ variant: "success", title: "Product created", message: "Your product was created successfully." });
-        router.push(`/app/products/${res.id}`);
+        router.push("/app/products");
         router.refresh();
       } else {
         if (!productId) throw new Error("Missing productId");
@@ -145,6 +145,7 @@ export function ProductEditor({
         });
         setSaved(true);
         toast({ variant: "success", title: "Saved", message: "Product changes were saved." });
+        router.push("/app/products");
         router.refresh();
       }
     } catch (e: unknown) {
