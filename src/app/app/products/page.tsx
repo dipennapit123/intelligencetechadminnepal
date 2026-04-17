@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { apiFetch } from "@/lib/api";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useToast } from "@/components/ui/Toast";
 
 type ProductRow = {
   id: string;
@@ -27,6 +28,7 @@ const STATUS_COLORS: Record<string, string> = {
 };
 
 export default function ProductListPage() {
+  const { toast } = useToast();
   const [rows, setRows] = React.useState<ProductRow[]>([]);
   const [busy, setBusy] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -58,9 +60,12 @@ export default function ProductListPage() {
       const token = data.session?.access_token;
       if (!token) throw new Error("Not authenticated");
       await apiFetch(`/api/admin/products/${id}`, token, { method: "DELETE" });
+      toast({ variant: "warning", title: "Deleted", message: "Product was deleted." });
       await load();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const msg = e instanceof Error ? e.message : "Request failed";
+      setError(msg);
+      toast({ variant: "error", title: "Delete failed", message: msg });
     }
   }
 

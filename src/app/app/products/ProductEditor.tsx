@@ -13,6 +13,7 @@ import { Input, Textarea } from "@/components/ui/Input";
 import { apiFetch, apiUpload } from "@/lib/api";
 import { productFormSchema, type ProductFormValues } from "@/lib/validation/schemas";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useToast } from "@/components/ui/Toast";
 
 export type ProductPayload = {
   name: string;
@@ -72,6 +73,7 @@ export function ProductEditor({
   initial: ProductPayload;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
@@ -132,6 +134,7 @@ export function ProductEditor({
           method: "POST",
           body: JSON.stringify(payload),
         });
+        toast({ variant: "success", title: "Product created", message: "Your product was created successfully." });
         router.push(`/app/products/${res.id}`);
         router.refresh();
       } else {
@@ -141,10 +144,13 @@ export function ProductEditor({
           body: JSON.stringify(payload),
         });
         setSaved(true);
+        toast({ variant: "success", title: "Saved", message: "Product changes were saved." });
         router.refresh();
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const msg = e instanceof Error ? e.message : "Request failed";
+      setError(msg);
+      toast({ variant: "error", title: "Save failed", message: msg });
     } finally {
       setBusy(false);
     }
@@ -160,8 +166,11 @@ export function ProductEditor({
       if (!token) throw new Error("Not authenticated");
       const { url } = await apiUpload(token, file, "product-images");
       setValue("logo_url", url, { shouldValidate: true, shouldDirty: true });
+      toast({ variant: "success", title: "Uploaded", message: "Logo uploaded successfully." });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setError(msg);
+      toast({ variant: "error", title: "Upload failed", message: msg });
     } finally {
       setUploading(false);
     }

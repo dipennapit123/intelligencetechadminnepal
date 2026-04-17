@@ -7,6 +7,7 @@ import { Button } from "@/components/ui/Button";
 import { Card } from "@/components/ui/Card";
 import { apiFetch } from "@/lib/api";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useToast } from "@/components/ui/Toast";
 
 type BlogRow = {
   id: string;
@@ -33,6 +34,7 @@ function hasSeoIssue(b: BlogRow) {
 }
 
 export default function BlogListPage() {
+  const { toast } = useToast();
   const [rows, setRows] = React.useState<BlogRow[]>([]);
   const [busy, setBusy] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
@@ -69,8 +71,17 @@ export default function BlogListPage() {
       const token = data.session?.access_token;
       if (!token) throw new Error("Not authenticated");
       await apiFetch(`/api/admin/blog/${id}`, token, { method: "PATCH", body: JSON.stringify({ published }) });
+      toast({
+        variant: "success",
+        title: published ? "Published" : "Unpublished",
+        message: published ? "Post is now live on the public site." : "Post moved back to draft.",
+      });
       await load();
-    } catch (e: unknown) { setError(getErrorMessage(e)); }
+    } catch (e: unknown) {
+      const msg = getErrorMessage(e);
+      setError(msg);
+      toast({ variant: "error", title: "Update failed", message: msg });
+    }
   }
 
   async function deleteBlog(id: string) {
@@ -81,8 +92,13 @@ export default function BlogListPage() {
       const token = data.session?.access_token;
       if (!token) throw new Error("Not authenticated");
       await apiFetch(`/api/admin/blog/${id}`, token, { method: "DELETE" });
+      toast({ variant: "warning", title: "Deleted", message: "Blog post was deleted." });
       await load();
-    } catch (e: unknown) { setError(getErrorMessage(e)); }
+    } catch (e: unknown) {
+      const msg = getErrorMessage(e);
+      setError(msg);
+      toast({ variant: "error", title: "Delete failed", message: msg });
+    }
   }
 
   const publishedCount = rows.filter((b) => b.published).length;

@@ -12,6 +12,7 @@ import { Textarea } from "@/components/ui/Input";
 import { apiFetch } from "@/lib/api";
 import { parseJsonPayload, validateSiteContent } from "@/lib/validation/schemas";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useToast } from "@/components/ui/Toast";
 
 const KEY_LABELS: Record<string, string> = {
   hero: "Hero Section",
@@ -26,6 +27,7 @@ export default function ContentEditorPage({ params }: { params: Promise<{ key: s
   const resolvedParams = React.use(params);
   const contentKey = resolvedParams.key;
   const router = useRouter();
+  const { toast } = useToast();
   const [value, setValue] = React.useState<unknown>({});
   const [busy, setBusy] = React.useState(true);
   const [saving, setSaving] = React.useState(false);
@@ -96,9 +98,12 @@ export default function ContentEditorPage({ params }: { params: Promise<{ key: s
       });
       setSuccess(true);
       setValue(validated.data);
+      toast({ variant: "success", title: "Saved", message: "Site content updated successfully." });
       router.refresh();
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Save failed");
+      const msg = e instanceof Error ? e.message : "Save failed";
+      setError(msg);
+      toast({ variant: "error", title: "Save failed", message: msg });
     } finally {
       setSaving(false);
     }

@@ -22,6 +22,7 @@ import { apiFetch } from "@/lib/api";
 import { insertMarkdownLinkAtCaret } from "@/lib/blogMarkdown";
 import { blogFormSchema, type BlogFormValues } from "@/lib/validation/schemas";
 import { createSupabaseBrowserClient } from "@/lib/supabase/browser";
+import { useToast } from "@/components/ui/Toast";
 
 export type BlogPayload = {
   title: string;
@@ -82,6 +83,7 @@ export function BlogEditor({
   initial: BlogPayload;
 }) {
   const router = useRouter();
+  const { toast } = useToast();
   const [busy, setBusy] = React.useState(false);
   const [error, setError] = React.useState<string | null>(null);
   const [saved, setSaved] = React.useState(false);
@@ -139,6 +141,7 @@ export function BlogEditor({
           method: "POST",
           body: JSON.stringify(payload),
         });
+        toast({ variant: "success", title: "Post created", message: "Blog post created successfully." });
         router.push(`/app/blog/${res.id}`);
         router.refresh();
       } else {
@@ -148,10 +151,13 @@ export function BlogEditor({
           body: JSON.stringify(payload),
         });
         setSaved(true);
+        toast({ variant: "success", title: "Saved", message: "Blog post changes were saved." });
         router.refresh();
       }
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Request failed");
+      const msg = e instanceof Error ? e.message : "Request failed";
+      setError(msg);
+      toast({ variant: "error", title: "Save failed", message: msg });
     } finally {
       setBusy(false);
     }
@@ -213,8 +219,11 @@ export function BlogEditor({
       if (!url) throw new Error("Upload failed");
 
       setValue("featured_image", url, { shouldValidate: true, shouldDirty: true });
+      toast({ variant: "success", title: "Uploaded", message: "Featured image uploaded." });
     } catch (e: unknown) {
-      setError(e instanceof Error ? e.message : "Upload failed");
+      const msg = e instanceof Error ? e.message : "Upload failed";
+      setError(msg);
+      toast({ variant: "error", title: "Upload failed", message: msg });
     } finally {
       setUploading(false);
     }
